@@ -441,6 +441,7 @@ body.ipa-hide .en i,body.ipa-hide .ko-line i,body.ipa-hide .card .f i{display:no
         <textarea id="set-backup-in" rows="4" placeholder="여기에 붙여넣기"></textarea>
         <button type="button" id="set-backup-apply">적용</button>
       </div>
+      <div class="calc" id="set-diag"></div>
       <div class="item" style="border:0">
         <div>진도 초기화</div>
         <button type="button" id="set-reset">초기화</button>
@@ -1641,6 +1642,11 @@ if (typeof module !== 'undefined') module.exports = window.WORDBOOK;
     $("#set-goal-starreward").value = s.goal.starReward;
 
     $("#set-backup-out").value = JSON.stringify(App.state);
+    var st = document.getElementById("app");
+    $("#set-diag").textContent = "화면 진단: 창 " + window.innerWidth + "×" + window.innerHeight
+      + " · 화면 " + screen.width + "×" + screen.height
+      + " · 앱높이 " + Math.round(st.getBoundingClientRect().height)
+      + " · 홈화면모드 " + (window.navigator.standalone === true || (window.matchMedia && matchMedia("(display-mode: standalone)").matches) ? "예" : "아니오");
   }
 
   /* ---- boot ---- */
