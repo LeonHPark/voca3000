@@ -35,11 +35,12 @@ button{font:inherit;color:inherit;background:var(--paper);border:1px solid var(-
 button:focus-visible{outline:2px solid var(--red);outline-offset:2px}
 button[disabled]{opacity:.4;cursor:default}
 
-#app{position:fixed;top:0;bottom:0;left:0;right:0;max-width:480px;margin:0 auto;padding-top:env(safe-area-inset-top);background:var(--paper);display:flex;flex-direction:column;overflow:hidden;
+#app{position:fixed;top:0;left:0;right:0;height:100vh;height:100dvh;max-width:480px;margin:0 auto;padding-top:env(safe-area-inset-top);background:var(--paper);display:flex;flex-direction:column;overflow:hidden;
   background-image:linear-gradient(#1A1D21,#1A1D21);background-size:100% env(safe-area-inset-top,0px);background-repeat:no-repeat}
 #ql-note{display:none;max-width:480px;margin:14px auto;padding:14px 16px;border:1px solid var(--line);border-radius:12px;background:var(--paper);font-size:14px;line-height:1.7}
 .nojs #ql-note{display:block}
 .nojs #app{display:none}
+@media (display-mode: standalone){#app{height:100vh}} /* 홈 화면 앱: dvh가 짧게 보고되는 iOS 버그 회피 */
 
 .topbar{display:flex;justify-content:space-between;align-items:center;padding:8px 10px;border-bottom:1px solid var(--line)}
 .nav{display:flex;gap:6px}
@@ -1653,6 +1654,19 @@ if (typeof module !== 'undefined') module.exports = window.WORDBOOK;
   if (store._mem) App.toast("이 브라우저에서는 기록이 저장되지 않아요");
   if (location.protocol === "https:" && "serviceWorker" in navigator)
     navigator.serviceWorker.register("sw.js").catch(function(){});
+  (function(){ // iOS 홈 화면 앱: 뷰포트 높이가 실제 화면보다 짧게 보고되는 버그 보정 (navigator.standalone은 iOS 전용)
+    if (window.navigator.standalone !== true) return;
+    var app = document.getElementById("app");
+    function fit(){
+      var ih = window.innerHeight || 0, sh = (window.screen && screen.height) || 0;
+      var portrait = !window.matchMedia || matchMedia("(orientation: portrait)").matches;
+      var gap = sh - ih;
+      app.style.height = (portrait && gap > 0 && gap <= 160) ? sh + "px" : "";
+    }
+    fit();
+    window.addEventListener("resize", fit);
+    window.addEventListener("orientationchange", function(){ setTimeout(fit, 300); });
+  })();
   var pillRow = $("#list-rows .pill");
   if (pillRow) pillRow.closest(".row").scrollIntoView({ block: "center" });
 })();
