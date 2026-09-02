@@ -23,7 +23,8 @@
   }
 }
 *{box-sizing:border-box}
-html,body{margin:0;height:100%;-webkit-text-size-adjust:100%}
+html,body{margin:0;height:100%;-webkit-text-size-adjust:100%;overflow:hidden;overscroll-behavior:none}
+body.nojs{overflow:auto}
 [hidden]{display:none!important}
 body{
   background:var(--desk); color:var(--ink);
@@ -34,7 +35,7 @@ button{font:inherit;color:inherit;background:var(--paper);border:1px solid var(-
 button:focus-visible{outline:2px solid var(--red);outline-offset:2px}
 button[disabled]{opacity:.4;cursor:default}
 
-#app{max-width:480px;margin:0 auto;height:100vh;height:100dvh;padding-top:env(safe-area-inset-top);background:var(--paper);display:flex;flex-direction:column;overflow:hidden;
+#app{position:fixed;top:0;bottom:0;left:0;right:0;max-width:480px;margin:0 auto;padding-top:env(safe-area-inset-top);background:var(--paper);display:flex;flex-direction:column;overflow:hidden;
   background-image:linear-gradient(#1A1D21,#1A1D21);background-size:100% env(safe-area-inset-top,0px);background-repeat:no-repeat}
 #ql-note{display:none;max-width:480px;margin:14px auto;padding:14px 16px;border:1px solid var(--line);border-radius:12px;background:var(--paper);font-size:14px;line-height:1.7}
 .nojs #ql-note{display:block}
@@ -260,8 +261,8 @@ button[disabled]{opacity:.4;cursor:default}
 
 @media print{
   @page{size:A4 landscape;margin:0}
-  html,body{background:#fff}
-  #app{max-width:none;height:auto;overflow:visible}
+  html,body{background:#fff;overflow:visible}
+  #app{position:static;max-width:none;height:auto;overflow:visible}
   #app>*:not(#print-root){display:none!important}
   #print-root{display:block!important}
 }
@@ -365,6 +366,13 @@ body.ipa-hide .en i,body.ipa-hide .ko-line i,body.ipa-hide .card .f i{display:no
         <div style="display:flex;gap:8px;align-items:center">
           <div class="swatches" id="set-swatches"></div>
           <input type="color" class="colorpick" id="set-colorpick" aria-label="원하는 색 직접 고르기">
+        </div>
+      </div>
+      <div class="item" style="border:0;padding-bottom:4px">
+        <div>모아보기 ♥ 색</div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <div class="swatches" id="set-heart-swatches"></div>
+          <input type="color" class="colorpick" id="set-heartpick" aria-label="모아보기 색 직접 고르기">
         </div>
       </div>
 
@@ -1488,6 +1496,21 @@ if (typeof module !== 'undefined') module.exports = window.WORDBOOK;
   });
   $("#set-colorpick").addEventListener("input", function(){ setHideColor(this.value); });
 
+  var HEART_PRESETS = ["#D6336C", "#F06595", "#E8590C", "#7048E8", "#1098AD"];
+  $("#set-heart-swatches").innerHTML = HEART_PRESETS.map(function(c){
+    return '<button type="button" class="swatch" data-c="' + c + '" style="background:' + c + '" aria-label="' + c + '"></button>';
+  }).join("");
+  function setHeartColor(c){
+    App.state.settings.heartColor = c;
+    document.documentElement.style.setProperty("--heart", c);
+    App.save(); App.refresh();
+  }
+  $("#set-heart-swatches").addEventListener("click", function(e){
+    var b = e.target.closest(".swatch"); if (!b) return;
+    setHeartColor(b.getAttribute("data-c"));
+  });
+  $("#set-heartpick").addEventListener("input", function(){ setHeartColor(this.value); });
+
   function fillVoiceSelect(){
     var sel = $("#set-voice-sel");
     if (!voiceList.length) { sel.innerHTML = "<option>사용 가능한 음성 없음</option>"; return; }
@@ -1600,6 +1623,8 @@ if (typeof module !== 'undefined') module.exports = window.WORDBOOK;
     $$("#set-ipa-seg button").forEach(function(b){ b.classList.toggle("is-on", (b.getAttribute("data-v") === "show") === !!s.ipaShow); });
     $$("#set-swatches .swatch").forEach(function(b){ b.classList.toggle("is-on", b.getAttribute("data-c").toLowerCase() === s.hideColor.toLowerCase()); });
     $("#set-colorpick").value = s.hideColor;
+    $$("#set-heart-swatches .swatch").forEach(function(b){ b.classList.toggle("is-on", !!s.heartColor && b.getAttribute("data-c").toLowerCase() === s.heartColor.toLowerCase()); });
+    $("#set-heartpick").value = s.heartColor || "#D6336C";
 
     fillVoiceSelect();
     $$("#set-rate-seg button").forEach(function(b){ b.classList.toggle("is-on", +b.getAttribute("data-r") === s.rate); });
@@ -1619,6 +1644,7 @@ if (typeof module !== 'undefined') module.exports = window.WORDBOOK;
 
   /* ---- boot ---- */
   document.documentElement.style.setProperty("--hide", App.state.settings.hideColor);
+  if (App.state.settings.heartColor) document.documentElement.style.setProperty("--heart", App.state.settings.heartColor);
   App.show("list");
   App.refresh();
   document.body.classList.remove("nojs");
