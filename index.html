@@ -883,23 +883,44 @@ if (typeof module !== 'undefined') module.exports = window.WORDBOOK;
       if (row.classList.contains("is-memorized")) { removeMemorized(id); App.refresh(); return; }
       var cell = e.target.closest(".en,.ko"); if (!cell) return;
       var col = cell.classList.contains("en") ? "en" : "ko";
-      if (container.classList.contains("is-hide-" + col)) cell.classList.toggle("is-peek");
+      if (container.classList.contains("is-hide-" + col)) {
+        var on = cell.classList.toggle("is-peek");
+        var arr = peekStore()[col], k = arr.indexOf(id);
+        if (on && k < 0) arr.push(id);
+        if (!on && k >= 0) arr.splice(k, 1);
+        App.save();
+      }
     });
   }
   attachListClicks($("#list-rows"));
   attachListClicks($("#starpanel-rows"));
 
-  /* ---- hide-en / hide-ko: mutual exclusion, per-cell peek (persisted in settings.hideEn/hideKo) ---- */
+  /* ---- hide-en / hide-ko: mutual exclusion, per-cell peek (progress.peeks에 저장 — 재렌더·재시작에도 유지) ---- */
+  function peekStore(){
+    var pr = App.state.progress;
+    if (!pr.peeks) pr.peeks = { en: [], ko: [] };
+    return pr.peeks;
+  }
   function applyHideState(){
     var hideEn = App.state.settings.hideEn, hideKo = App.state.settings.hideKo;
     var rows = $("#list-rows");
     rows.classList.toggle("is-hide-en", hideEn);
     rows.classList.toggle("is-hide-ko", hideKo);
+    var pk = peekStore();
+    $$("#list-rows .row").forEach(function(row){
+      var id = +row.getAttribute("data-id");
+      ["en", "ko"].forEach(function(col){
+        var cell = row.querySelector("." + col);
+        if (cell) cell.classList.toggle("is-peek", pk[col].indexOf(id) >= 0);
+      });
+    });
     var he = $("#hide-en"), hk = $("#hide-ko");
     he.classList.toggle("is-on", hideEn); he.textContent = hideEn ? "영문 보이기" : "영문 다 가리기";
     hk.classList.toggle("is-on", hideKo); hk.textContent = hideKo ? "한글 보이기" : "한글 다 가리기";
   }
   function clearPeeks(col){
+    var pk = peekStore();
+    if (col) pk[col] = []; else { pk.en = []; pk.ko = []; }
     var sel = col ? ".row ." + col + ".is-peek" : ".row .is-peek";
     document.querySelectorAll(sel).forEach(function(el){ el.classList.remove("is-peek"); });
   }
