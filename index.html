@@ -45,6 +45,7 @@ button[disabled]{opacity:.4;cursor:default}
 .topbar{display:flex;justify-content:space-between;align-items:center;padding:8px 10px;border-bottom:1px solid var(--line)}
 .nav{display:flex;gap:6px}
 .icon-btn{width:40px;height:40px;padding:0;display:grid;place-items:center;border-radius:10px}
+.backbtn{min-height:40px;padding:0 10px;border-radius:10px;font-weight:600}
 .icon-btn.on{background:var(--ink);color:var(--paper);border-color:var(--ink)}
 .star-open{min-height:40px;padding:0 12px;color:var(--heart);font-weight:600;border:0;background:none}
 
@@ -100,8 +101,8 @@ button[disabled]{opacity:.4;cursor:default}
 
 .starpanel{position:fixed;inset:0;background:var(--paper);display:flex;flex-direction:column;z-index:20}
 .starpanel[hidden]{display:none}
-.starpanel .hd{display:flex;justify-content:space-between;align-items:center;padding:14px;border-bottom:1px solid var(--line);font-weight:600}
-.starpanel .hd button{border:0;background:none;color:var(--muted);min-height:40px;padding:0 10px}
+.starpanel .hd{display:flex;justify-content:flex-start;gap:10px;align-items:center;padding:10px 14px;border-bottom:1px solid var(--line);font-weight:600}
+.starpanel .hd button{border:1px solid var(--line);background:var(--paper);color:var(--ink);min-height:40px;padding:0 10px;border-radius:10px;font-weight:600}
 .starpanel .rows{flex:1}
 .starpanel .empty{padding:40px 20px;text-align:center;color:var(--muted);font-size:13px}
 .starpanel .ft{padding:10px 14px 16px;border-top:1px solid var(--line);display:flex;gap:8px}
@@ -283,6 +284,7 @@ body.ipa-hide .en i,body.ipa-hide .ko-line i,body.ipa-hide .card .f i{display:no
 <div id="app">
   <header class="topbar">
     <div class="nav">
+      <button type="button" id="nav-back" class="backbtn" hidden>‹ 뒤로</button>
       <button type="button" id="nav-list" class="icon-btn" aria-label="목록"></button>
       <button type="button" id="nav-card" class="icon-btn" aria-label="카드로 외우기"></button>
     </div>
@@ -475,7 +477,7 @@ body.ipa-hide .en i,body.ipa-hide .ko-line i,body.ipa-hide .card .f i{display:no
   </div>
 
   <div id="starpanel" class="starpanel" hidden>
-    <div class="hd"><span>♥ 모아보기 <span id="starpanel-count">0</span></span><button type="button" id="starpanel-close">닫기</button></div>
+    <div class="hd"><button type="button" id="starpanel-close" class="back">‹ 뒤로</button><span>♥ 모아보기 <span id="starpanel-count">0</span></span></div>
     <div id="starpanel-rows" class="rows"></div>
     <div class="ft">
       <button type="button" id="starpanel-print">🖨 모아보기만 인쇄</button>
@@ -770,7 +772,11 @@ if (typeof module !== 'undefined') module.exports = window.WORDBOOK;
 
   var VIEWS = { list: "view-list", card: "view-card", cal: "view-cal", quiz: "view-quiz", settings: "view-settings" };
   var NAVS = { list: "nav-list", card: "nav-card", cal: "nav-cal", settings: "nav-set" };
+  var curView = "list", prevView = "list";   // 뒤로가기 = 바로 전에 보던 화면
   App.show = function(name){
+    if (name !== curView) { prevView = curView; curView = name; }
+    var back = document.getElementById("nav-back");
+    if (back) back.hidden = (name !== "card");
     Object.keys(VIEWS).forEach(function(k){
       var el = document.getElementById(VIEWS[k]);
       if (el) el.hidden = (k !== name);
@@ -1449,6 +1455,7 @@ if (typeof module !== 'undefined') module.exports = window.WORDBOOK;
     App.show(active ? "list" : name); App.refresh();
   }
   $("#nav-card").addEventListener("click", function(){ navToggle("card"); });
+  $("#nav-back").addEventListener("click", function(){ App.show(prevView === "card" ? "list" : prevView); App.refresh(); });
   $("#nav-cal").addEventListener("click", function(){ navToggle("cal"); });
   $("#nav-set").addEventListener("click", function(){ navToggle("settings"); });
 
