@@ -40,7 +40,9 @@ button[disabled]{opacity:.4;cursor:default}
 #ql-note{display:none;max-width:480px;margin:14px auto;padding:14px 16px;border:1px solid var(--line);border-radius:12px;background:var(--paper);font-size:14px;line-height:1.7}
 .nojs #ql-note{display:block}
 .nojs #app{display:none}
-@media (display-mode: standalone){#app{height:100vh}} /* 홈 화면 앱: dvh가 짧게 보고되는 iOS 버그 회피 */
+@media (display-mode: standalone){ /* 홈 화면 앱: dvh가 짧게 보고되는 iOS 버그 회피 + 상단 안전 여백 최소 50px(노치·시계와 겹침 방지) */
+  #app{height:100vh;padding-top:max(env(safe-area-inset-top,0px),50px);background-size:100% max(env(safe-area-inset-top,0px),50px)}
+}
 
 .topbar{display:flex;justify-content:space-between;align-items:center;padding:8px 10px;border-bottom:1px solid var(--line)}
 .nav{display:flex;gap:6px}
@@ -1696,6 +1698,10 @@ if (typeof module !== 'undefined') module.exports = window.WORDBOOK;
       var portrait = !window.matchMedia || matchMedia("(orientation: portrait)").matches;
       var gap = sh - ih;
       app.style.height = (portrait && gap > 0 && gap <= 160) ? sh + "px" : "";
+      // 상단 안전 여백: iOS가 env(safe-area-inset-top)를 0으로 보고하면 상단바가 노치·시계 밑에 깔림 → 최소 50px 강제
+      var pt = parseFloat(getComputedStyle(app).paddingTop) || 0;
+      if (portrait && pt < 50) { app.style.paddingTop = "50px"; app.style.backgroundSize = "100% 50px"; }
+      else if (!portrait) { app.style.paddingTop = ""; app.style.backgroundSize = ""; }
     }
     fit();
     window.addEventListener("resize", fit);
